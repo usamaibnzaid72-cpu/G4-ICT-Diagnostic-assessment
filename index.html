@@ -77,8 +77,13 @@
             transition: background-color 0.3s;
         }
 
-        button:hover {
+        button:hover:not(:disabled) {
             background-color: #004d4d;
+        }
+        
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
         }
 
         .question {
@@ -130,10 +135,35 @@
             background-color: rgba(255, 255, 255, 0.1);
         }
 
+        /* Modal styling */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-content button {
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
-
     <div class="container">
         <div class="title-page" id="title-page">
             <img src="https://storage.googleapis.com/yaschools/schools-logo/148544809806-19-2025-10-34-06.jpg" alt="School Logo" class="logo">
@@ -147,7 +177,7 @@
         </div>
 
         <div class="quiz-page" id="quiz-page">
-            <h2 id="question-counter">Question 1 of 100</h2>
+            <h2 id="question-counter">Question 1 of 50</h2>
             <div id="question-container"></div>
             <button onclick="previousQuestion()" id="previous-button" style="display: none;">Previous</button>
             <button onclick="nextQuestion()" id="next-button">Next</button>
@@ -157,7 +187,7 @@
         <div class="result-page" id="result-page">
             <h2>Assessment Report</h2>
             <p>Student: <span id="student-name-result"></span></p>
-            <p>Your Score: <span id="score"></span> / 100</p>
+            <p>Your Score: <span id="score"></span> / 50</p>
             <div class="report-section">
                 <h3>Strengths & Weaknesses</h3>
                 <div id="strengths-weaknesses"></div>
@@ -171,6 +201,7 @@
     </div>
 
     <script>
+        // Data for the 50-question quiz.
         const quizData = [
             { type: "multiple-choice", question: "1. Which of these is a computer part you can touch?", options: ["Software", "Hardware", "Data", "Virus"], answer: "Hardware", topic: "Hardware" },
             { type: "true-false", question: "2. The monitor is used for typing letters.", answer: "False", topic: "Hardware" },
@@ -222,63 +253,15 @@
             { type: "case-study", question: "48. **Case Study:** A student needs to email a picture to their teacher. What command would they use in the email program?", answer: "The 'attach' or 'insert' command.", topic: "Internet" },
             { type: "multiple-choice", question: "49. Which of these is a way to protect your computer?", options: ["Installing antivirus software", "Clicking on pop-up ads", "Sharing your password", "Downloading files from unknown sources"], answer: "Installing antivirus software", topic: "Digital Citizenship" },
             { type: "true-false", question: "50. A program is a set of instructions that a computer can follow.", answer: "True", topic: "Programming" },
-            { type: "fill-in-the-blank", question: "51. A _________ is a type of storage that holds data even when the computer is turned off.", answer: "hard drive", topic: "Hardware" },
-            { type: "matching", question: "52. Match the action to the program.", pairs: [{ left: "Sending an email", right: ["Email Program", "Spreadsheet Program"] }, { left: "Making a chart with numbers", right: ["Spreadsheet Program", "Email Program"] }], answers: { "Sending an email": "Email Program", "Making a chart with numbers": "Spreadsheet Program" }, topic: "Software" },
-            { type: "short-answer", question: "53. What is a 'folder' used for?", answer: "To organize and store files.", topic: "File Management" },
-            { type: "case-study", question: "54. **Case Study:** A student's computer is running very slowly. What might be a simple thing to do to help?", answer: "Restart the computer or close unnecessary programs.", topic: "Troubleshooting" },
-            { type: "multiple-choice", question: "55. Which of these is a safe way to communicate online?", options: ["Talking to friends on a secure chat app", "Sharing secrets with a new online friend", "Agreeing to meet an online stranger", "Using your real name in a public game"], answer: "Talking to friends on a secure chat app", topic: "Digital Citizenship" },
-            { type: "true-false", question: "56. A URL is a website's address.", answer: "True", topic: "Internet" },
-            { type: "fill-in-the-blank", question: "57. When you visit a website, your computer is the _________ and the website is on a server.", answer: "client", topic: "Internet" },
-            { type: "matching", question: "58. Match the term to its meaning.", pairs: [{ left: "Username", right: ["A name you use to log in", "A secret word to log in"] }, { left: "Password", right: ["A secret word to log in", "A name you use to log in"] }], answers: { "Username": "A name you use to log in", "Password": "A secret word to log in" }, topic: "Digital Citizenship" },
-            { type: "short-answer", question: "59. What does 'download' mean?", answer: "To copy a file from the internet to your computer.", topic: "Internet" },
-            { type: "case-study", question: "60. **Case Study:** A student wants to print a picture they found online. What device is needed?", answer: "A printer.", topic: "Hardware" },
-            { type: "multiple-choice", question: "61. Which of these is a type of software?", options: ["Hard drive", "Mouse", "Game", "Monitor"], answer: "Game", topic: "Software" },
-            { type: "true-false", question: "62. You should only use a strong password for your email, not for games.", answer: "False", topic: "Digital Citizenship" },
-            { type: "fill-in-the-blank", question: "63. The part of a computer that displays images and text is the _________.", answer: "monitor", topic: "Hardware" },
-            { type: "matching", question: "64. Match the program to its use.", pairs: [{ left: "Spreadsheet", right: ["Organizing data in rows and columns", "Typing a letter"] }, { left: "Word Processor", right: ["Typing a letter", "Organizing data in rows and columns"] }], answers: { "Spreadsheet": "Organizing data in rows and columns", "Word Processor": "Typing a letter" }, topic: "Software" },
-            { type: "short-answer", question: "65. What is a 'browser'?", answer: "A program used to view web pages on the internet.", topic: "Internet" },
-            { type: "case-study", question: "66. **Case Study:** A student sees a pop-up ad that says they won a prize. What should they do?", answer: "Close the pop-up immediately and ask an adult for help.", topic: "Digital Citizenship" },
-            { type: "multiple-choice", question: "67. Which of these is a safe way to share a picture with a friend?", options: ["Email it to them", "Post it on a public website", "Send it to a stranger", "Tell them your password"], answer: "Email it to them", topic: "Digital Citizenship" },
-            { type: "true-false", question: "68. A computer program is a set of instructions.", answer: "True", topic: "Programming" },
-            { type: "fill-in-the-blank", question: "69. To move a file to a new location, you can use the 'cut' and '_________ ' commands.", answer: "paste", topic: "File Management" },
-            { type: "matching", question: "70. Match the term to its meaning.", pairs: [{ left: "Input", right: ["Giving a computer information", "Getting information from a computer"] }, { left: "Output", right: ["Getting information from a computer", "Giving a computer information"] }], answers: { "Input": "Giving a computer information", "Output": "Getting information from a computer" }, topic: "Hardware" },
-            { type: "short-answer", question: "71. What does 'phishing' mean?", answer: "Tricking someone into giving away personal information online.", topic: "Digital Citizenship" },
-            { type: "case-study", question: "72. **Case Study:** A student wants to listen to a song on their computer. What device would play the sound?", answer: "Speakers or headphones.", topic: "Hardware" },
-            { type: "multiple-choice", question: "73. Which of these is a type of computer?", options: ["Smartphone", "TV", "Microwave", "Lamp"], answer: "Smartphone", topic: "Hardware" },
-            { type: "true-false", question: "74. It is okay to use someone else's computer account without their permission.", answer: "False", topic: "Digital Citizenship" },
-            { type: "fill-in-the-blank", question: "75. A _________ is a program that finds and removes computer viruses.", answer: "antivirus", topic: "Digital Citizenship" },
-            { type: "matching", question: "76. Match the term to its meaning.", pairs: [{ left: "URL", right: ["Website address", "Computer program"] }, { left: "Email", right: ["Electronic mail", "Electronic money"] }], answers: { "URL": "Website address", "Email": "Electronic mail" }, topic: "Internet" },
-            { type: "short-answer", question: "77. What is 'computer memory'?", answer: "The part of the computer that stores information for a short time.", topic: "Hardware" },
-            { type: "case-study", question: "78. **Case Study:** A student wants to make a chart to show how many students in the class like pizza or burgers. What kind of program would be best?", answer: "A spreadsheet program.", topic: "Software" },
-            { type: "multiple-choice", question: "79. Which of these is an example of an input device?", options: ["Printer", "Monitor", "Webcam", "Speaker"], answer: "Webcam", topic: "Hardware" },
-            { type: "true-false", question: "80. A 'folder' is a physical object you can hold.", answer: "False", topic: "File Management" },
-            { type: "fill-in-the-blank", question: "81. A _________ is a special name that identifies you on a website or app.", answer: "username", topic: "Digital Citizenship" },
-            { type: "matching", question: "82. Match the device to its category.", pairs: [{ left: "Mouse", right: ["Input device", "Output device"] }, { left: "Headphones", right: ["Output device", "Input device"] }], answers: { "Mouse": "Input device", "Headphones": "Output device" }, topic: "Hardware" },
-            { type: "short-answer", question: "83. What is the 'cloud' in computing?", answer: "A network of servers that store, manage, and process data over the internet.", topic: "Internet" },
-            { type: "case-study", question: "84. **Case Study:** A student is using a program that shows them how to build a robot step by step. What kind of instructions are they following?", answer: "An algorithm.", topic: "Programming" },
-            { type: "multiple-choice", question: "85. What is the term for a program designed to harm your computer?", options: ["Antivirus", "Malware", "Web browser", "Desktop"], answer: "Malware", topic: "Digital Citizenship" },
-            { type: "true-false", question: "86. An algorithm is a set of instructions.", answer: "True", topic: "Programming" },
-            { type: "fill-in-the-blank", question: "87. The process of finding and fixing mistakes in a program is called _________.", answer: "debugging", topic: "Programming" },
-            { type: "matching", question: "88. Match the device to its purpose.", pairs: [{ left: "Webcam", right: ["Taking video and pictures", "Typing words"] }, { left: "Keyboard", right: ["Typing words", "Taking video and pictures"] }], answers: { "Webcam": "Taking video and pictures", "Keyboard": "Typing words" }, topic: "Hardware" },
-            { type: "short-answer", question: "89. What is 'privacy' online?", answer: "Protecting your personal information and keeping it safe from others.", topic: "Digital Citizenship" },
-            { type: "case-study", question: "90. **Case Study:** A student wants to make a story with pictures and sounds. What kind of program would be best?", answer: "A presentation or multimedia program.", topic: "Software" },
-            { type: "multiple-choice", question: "91. What is the process of getting information from a computer?", options: ["Input", "Processing", "Output", "Storage"], answer: "Output", topic: "Hardware" },
-            { type: "true-false", question: "92. A 'save' command permanently deletes a file.", answer: "False", topic: "File Management" },
-            { type: "fill-in-the-blank", question: "93. A _________ is a computer that provides services to other computers on a network.", answer: "server", topic: "Internet" },
-            { type: "matching", question: "94. Match the term to its meaning.", pairs: [{ left: "Hardware", right: ["Physical parts of a computer", "Programs on a computer"] }, { left: "Software", right: ["Programs on a computer", "Physical parts of a computer"] }], answers: { "Hardware": "Physical parts of a computer", "Software": "Programs on a computer" }, topic: "ICT Fundamentals" },
-            { type: "short-answer", question: "95. What is the purpose of a 'search bar' in a web browser?", answer: "To type keywords to find information on the internet.", topic: "Internet" },
-            { type: "case-study", question: "96. **Case Study:** A student is working on a story and wants to change the font and color of the text. What program feature allows this?", answer: "The formatting or text styling options.", topic: "Software" },
-            { type: "multiple-choice", question: "97. What is a computer 'network'?", options: ["A group of computers connected to share resources", "A type of game", "A program for typing", "A type of mouse"], answer: "A group of computers connected to share resources", topic: "Internet" },
-            { type: "true-false", question: "98. All information on the internet is true.", answer: "False", topic: "Digital Citizenship" },
-            { type: "fill-in-the-blank", question: "99. A _________ is a type of storage that holds data for a short time and is erased when the computer is turned off.", answer: "RAM", topic: "Hardware" },
-            { type: "short-answer", question: "100. What is 'coding'?", answer: "The process of writing instructions for a computer in a programming language.", topic: "Programming" }
         ];
-
+        
+        // State variables for the quiz
         let currentQuestionIndex = 0;
         let score = 0;
         const userAnswers = {};
         let studentName = "";
 
+        // Get DOM elements
         const titlePage = document.getElementById('title-page');
         const quizPage = document.getElementById('quiz-page');
         const resultPage = document.getElementById('result-page');
@@ -288,10 +271,13 @@
         const nextButton = document.getElementById('next-button');
         const previousButton = document.getElementById('previous-button');
 
+        /**
+         * Starts the assessment, checks for student name, and displays the first question.
+         */
         function startAssessment() {
             studentName = document.getElementById('studentName').value.trim();
             if (!studentName) {
-                alert("Please enter your full name to start the assessment.");
+                showModal("Please enter your full name to start the assessment.");
                 return;
             }
             document.getElementById('student-name-result').textContent = studentName;
@@ -300,6 +286,9 @@
             loadQuestion();
         }
 
+        /**
+         * Renders the current question based on the `currentQuestionIndex`.
+         */
         function loadQuestion() {
             if (currentQuestionIndex < 0) currentQuestionIndex = 0;
             if (currentQuestionIndex >= quizData.length) currentQuestionIndex = quizData.length - 1;
@@ -314,6 +303,7 @@
             let questionHTML = `<h4>${q.question}</h4>`;
             questionDiv.innerHTML = questionHTML;
 
+            // Render different question types and add event listeners
             if (q.type === 'multiple-choice' || q.type === 'true-false') {
                 const optionsDiv = document.createElement('div');
                 optionsDiv.classList.add('options');
@@ -321,11 +311,12 @@
                     const inputId = `q${currentQuestionIndex}-opt-${option.replace(/\s+/g, '-')}`;
                     optionsDiv.innerHTML += `
                         <label for="${inputId}">
-                            <input type="radio" name="answer" id="${inputId}" value="${option}"> ${option}
+                            <input type="radio" name="answer" id="${inputId}" value="${option}" onchange="checkAnswerStatus()"> ${option}
                         </label>
                     `;
                 });
                 questionDiv.appendChild(optionsDiv);
+                // Pre-fill answer if it exists
                 if (userAnswers[currentQuestionIndex]) {
                     const savedAnswer = userAnswers[currentQuestionIndex];
                     const selectedInput = document.querySelector(`input[name="answer"][value="${savedAnswer}"]`);
@@ -339,24 +330,28 @@
                 input.placeholder = 'Type your answer here...';
                 input.id = 'text-answer';
                 input.style.width = 'calc(100% - 22px)';
+                input.setAttribute('oninput', 'checkAnswerStatus()');
+                // Pre-fill answer if it exists
                 if (userAnswers[currentQuestionIndex]) {
                     input.value = userAnswers[currentQuestionIndex];
                 }
                 questionDiv.appendChild(input);
             } else if (q.type === 'matching') {
                 const matchingDiv = document.createElement('div');
+                matchingDiv.id = 'matching-options';
                 q.pairs.forEach((pair, index) => {
                     const pairDiv = document.createElement('div');
                     pairDiv.classList.add('matching-pair');
                     const selectId = `matching-${currentQuestionIndex}-${index}`;
                     pairDiv.innerHTML = `
                         <span>${pair.left}</span>
-                        <select id="${selectId}">
+                        <select id="${selectId}" onchange="checkAnswerStatus()">
                             <option value="">-- Select --</option>
                             ${pair.right.map(r => `<option value="${r}">${r}</option>`).join('')}
                         </select>
                     `;
                     matchingDiv.appendChild(pairDiv);
+                    // Pre-fill answer if it exists
                     setTimeout(() => {
                         if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex][pair.left]) {
                             document.getElementById(selectId).value = userAnswers[currentQuestionIndex][pair.left];
@@ -368,6 +363,7 @@
 
             questionContainer.appendChild(questionDiv);
 
+            // Manage button visibility and state
             previousButton.style.display = currentQuestionIndex > 0 ? 'inline-block' : 'none';
             if (currentQuestionIndex === quizData.length - 1) {
                 nextButton.style.display = 'none';
@@ -376,16 +372,98 @@
                 nextButton.style.display = 'inline-block';
                 submitButton.style.display = 'none';
             }
+            
+            // Disable next/submit button until an answer is provided
+            checkAnswerStatus();
         }
 
+        /**
+         * Checks if the current question has been answered and enables the next/submit button.
+         */
+        function checkAnswerStatus() {
+            const q = quizData[currentQuestionIndex];
+            let isAnswered = false;
+
+            if (q.type === 'multiple-choice' || q.type === 'true-false') {
+                isAnswered = document.querySelector(`input[name="answer"]:checked`) !== null;
+            } else if (q.type === 'fill-in-the-blank' || q.type === 'short-answer' || q.type === 'case-study') {
+                const textInput = document.getElementById('text-answer');
+                isAnswered = textInput.value.trim() !== '';
+            } else if (q.type === 'matching') {
+                isAnswered = true; // Assume true, then check if any select is empty
+                const selects = document.querySelectorAll(`#matching-options select`);
+                selects.forEach(select => {
+                    if (select.value === "") {
+                        isAnswered = false;
+                    }
+                });
+            }
+
+            if (currentQuestionIndex === quizData.length - 1) {
+                submitButton.disabled = !isAnswered;
+            } else {
+                nextButton.disabled = !isAnswered;
+            }
+        }
+
+        /**
+         * Saves the current answer and moves to the next question.
+         */
+        function nextQuestion() {
+            if (!isCurrentQuestionAnswered()) {
+                showModal("Please answer the current question before proceeding.");
+                return;
+            }
+            saveAnswer();
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        /**
+         * Saves the current answer and moves to the previous question.
+         */
+        function previousQuestion() {
+            saveAnswer();
+            currentQuestionIndex--;
+            loadQuestion();
+        }
+
+        /**
+         * Checks if the current question has been answered.
+         */
+        function isCurrentQuestionAnswered() {
+            const q = quizData[currentQuestionIndex];
+            if (q.type === 'multiple-choice' || q.type === 'true-false') {
+                return document.querySelector(`input[name="answer"]:checked`) !== null;
+            } else if (q.type === 'fill-in-the-blank' || q.type === 'short-answer' || q.type === 'case-study') {
+                const textInput = document.getElementById('text-answer');
+                return textInput.value.trim() !== '';
+            } else if (q.type === 'matching') {
+                const selects = document.querySelectorAll(`#matching-options select`);
+                let answered = true;
+                selects.forEach(select => {
+                    if (select.value === "") {
+                        answered = false;
+                    }
+                });
+                return answered;
+            }
+            return false;
+        }
+
+        /**
+         * Saves the user's answer for the current question.
+         */
         function saveAnswer() {
             const q = quizData[currentQuestionIndex];
             if (q.type === 'multiple-choice' || q.type === 'true-false') {
-                const selected = document.querySelector('input[name="answer"]:checked');
-                userAnswers[currentQuestionIndex] = selected ? selected.value : null;
+                const selected = document.querySelector(`input[name="answer"]:checked`);
+                if (selected) {
+                    userAnswers[currentQuestionIndex] = selected.value;
+                }
             } else if (q.type === 'fill-in-the-blank' || q.type === 'short-answer' || q.type === 'case-study') {
-                const textAnswer = document.getElementById('text-answer');
-                userAnswers[currentQuestionIndex] = textAnswer ? textAnswer.value.trim() : null;
+                const textInput = document.getElementById('text-answer');
+                userAnswers[currentQuestionIndex] = textInput.value.trim();
             } else if (q.type === 'matching') {
                 const matchingAnswers = {};
                 q.pairs.forEach((pair, index) => {
@@ -396,176 +474,195 @@
             }
         }
 
-        function validateAnswer() {
-            const q = quizData[currentQuestionIndex];
-            if (q.type === 'multiple-choice' || q.type === 'true-false') {
-                return document.querySelector('input[name="answer"]:checked') !== null;
-            } else if (q.type === 'fill-in-the-blank' || q.type === 'short-answer' || q.type === 'case-study') {
-                const textAnswer = document.getElementById('text-answer');
-                return textAnswer && textAnswer.value.trim() !== "";
-            } else if (q.type === 'matching') {
-                let allSelected = true;
-                q.pairs.forEach((pair, index) => {
-                    const select = document.getElementById(`matching-${currentQuestionIndex}-${index}`);
-                    if (select.value === "") allSelected = false;
-                });
-                return allSelected;
-            }
-            return true;
-        }
-
-        function nextQuestion() {
-            if (validateAnswer()) {
-                saveAnswer();
-                currentQuestionIndex++;
-                loadQuestion();
-            } else {
-                alert("Please answer the current question before proceeding.");
-            }
-        }
-
-        function previousQuestion() {
-            saveAnswer();
-            currentQuestionIndex--;
-            loadQuestion();
-        }
-
+        /**
+         * Handles the submission of the assessment.
+         */
         function submitAssessment() {
-            if (validateAnswer()) {
-                saveAnswer();
-                let correctCount = 0;
-                const topicScores = {};
-                const topicTotals = {};
-                
-                quizData.forEach((q, index) => {
-                    let isCorrect = false;
-                    const userAnswer = userAnswers[index];
-                    const topic = q.topic || "General";
-
-                    topicTotals[topic] = (topicTotals[topic] || 0) + 1;
-
-                    if (q.type === 'multiple-choice' || q.type === 'true-false') {
-                        if (userAnswer === q.answer) isCorrect = true;
-                    } else if (q.type === 'fill-in-the-blank' || q.type === 'short-answer' || q.type === 'case-study') {
-                        if (userAnswer && userAnswer.toLowerCase() === q.answer.toLowerCase()) isCorrect = true;
-                    } else if (q.type === 'matching') {
-                        let allMatchedCorrectly = true;
-                        if (userAnswer) {
-                            for (const term in q.answers) {
-                                if (userAnswer[term] !== q.answers[term]) {
-                                    allMatchedCorrectly = false;
-                                    break;
-                                }
-                            }
-                        } else {
-                            allMatchedCorrectly = false;
-                        }
-                        isCorrect = allMatchedCorrectly;
-                    }
-
-                    if (isCorrect) {
-                        correctCount++;
-                        topicScores[topic] = (topicScores[topic] || 0) + 1;
-                    }
-                });
-
-                score = correctCount;
-                showResults(topicScores, topicTotals);
-            } else {
-                alert("Please answer the final question before submitting.");
+            if (!isCurrentQuestionAnswered()) {
+                showModal("Please answer the current question before submitting.");
+                return;
             }
-        }
-
-        function showResults(topicScores, topicTotals) {
+            saveAnswer();
             quizPage.style.display = 'none';
             resultPage.style.display = 'block';
-
-            document.getElementById('score').textContent = score;
-            
-            const strengths = [];
-            const weaknesses = [];
-            
-            let strengthsWeaknessesHTML = "";
-            for (const topic in topicTotals) {
-                const correct = topicScores[topic] || 0;
-                const total = topicTotals[topic];
-                const percentage = (correct / total) * 100;
-                
-                let backgroundClass = 'feedback-box';
-                if (percentage >= 80) {
-                    strengths.push(topic);
-                    backgroundClass = 'strength';
-                }
-                if (percentage < 50) {
-                    weaknesses.push(topic);
-                    backgroundClass = 'weakness';
-                }
-
-                strengthsWeaknessesHTML += `<div class="${backgroundClass}"><p><strong>${topic}</strong>: ${correct}/${total} (${percentage.toFixed(0)}%)</p></div>`;
-            }
-            document.getElementById('strengths-weaknesses').innerHTML = strengthsWeaknessesHTML;
-
-            const feedback = `
-                Based on your performance, here is a summary of your strengths and areas for development:
-                <br><br><strong>Strengths:</strong> You demonstrated a strong understanding of the following topics: ${strengths.length > 0 ? strengths.join(', ') : 'All topics'}.
-                <br><br><strong>Weaknesses:</strong> Areas that could use more focus include: ${weaknesses.length > 0 ? weaknesses.join(', ') : 'No specific weaknesses were identified'}.
-                <br><br><strong>Recommendations:</strong>
-                <br>- To build on your strong foundation, consider exploring more advanced concepts in your areas of strength.
-                <br>- For areas of weakness, it is recommended that you review core concepts. Reviewing notes, online tutorials, or seeking clarification would be beneficial.
-            `;
-            document.getElementById('feedback').innerHTML = feedback;
-
-            // Formal written report
-            const today = new Date();
-            const date = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-            const parentReportText = `
-[Your School Name]
-[School Address]
-[City, Postal Code]
-[Phone Number]
-[Email Address]
-
-${date}
-
-To the Parents/Guardians of ${studentName},
-
-This letter is a formal report on the Grade 4 ICT Diagnostic Assessment administered on ${date}. The purpose of this assessment was to evaluate your child's foundational knowledge in key areas of Information and Communication Technology.
-
-**Student Information:**
-Student Name: ${studentName}
-Total Score: ${score} out of 100
-
-**Performance Overview:**
-Your child demonstrated a commendable understanding of ICT principles, with particular strength in the following topics: ${strengths.length > 0 ? strengths.join(', ') : 'All topics assessed'}. This indicates a strong grasp of core concepts in these areas.
-
-**Areas for Development:**
-Based on the results, areas that may require additional attention include: ${weaknesses.length > 0 ? weaknesses.join(', ') : 'No specific weaknesses were identified, which is excellent'}. Focusing on these topics through targeted practice can help strengthen your child’s overall comprehension.
-
-**Recommendations:**
-It is recommended that your child reviews the materials related to the identified areas for development. Continued engagement with these subjects will be crucial for their progress.
-
-Please feel free to contact me at your convenience to discuss these results further.
-
-Sincerely,
-
-Mr. Usama Ibnzaid
-ICT Teacher
-[Your Teacher Email]
-`;
-            document.getElementById('parent-report').innerText = parentReportText.trim();
+            evaluateAnswers();
+            generateReport();
         }
 
+        /**
+         * Compares user answers to correct answers and calculates the score.
+         */
+        function evaluateAnswers() {
+            score = 0;
+            quizData.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                if (q.type === 'multiple-choice' || q.type === 'true-false') {
+                    if (userAnswer === q.answer) {
+                        score++;
+                    }
+                } else if (q.type === 'fill-in-the-blank' || q.type === 'short-answer' || q.type === 'case-study') {
+                    if (userAnswer && userAnswer.toLowerCase() === q.answer.toLowerCase()) {
+                        score++;
+                    }
+                } else if (q.type === 'matching') {
+                    let correctPairs = 0;
+                    let totalPairs = Object.keys(q.answers).length;
+                    for (const key in q.answers) {
+                        if (userAnswer && userAnswer[key] && userAnswer[key] === q.answers[key]) {
+                            correctPairs++;
+                        }
+                    }
+                    if (correctPairs === totalPairs) {
+                        score++;
+                    }
+                }
+            });
+            document.getElementById('score').textContent = score;
+        }
+
+        /**
+         * Generates the personalized report for the student.
+         */
+        function generateReport() {
+            const topicScores = {};
+            const topicCounts = {};
+            
+            // Calculate scores per topic
+            quizData.forEach((q, index) => {
+                const topic = q.topic;
+                const userAnswer = userAnswers[index];
+                if (!topicScores[topic]) {
+                    topicScores[topic] = 0;
+                    topicCounts[topic] = 0;
+                }
+                topicCounts[topic]++;
+
+                if (q.type === 'multiple-choice' || q.type === 'true-false') {
+                    if (userAnswer === q.answer) {
+                        topicScores[topic]++;
+                    }
+                } else if (q.type === 'fill-in-the-blank' || q.type === 'short-answer' || q.type === 'case-study') {
+                    if (userAnswer && userAnswer.toLowerCase() === q.answer.toLowerCase()) {
+                        topicScores[topic]++;
+                    }
+                } else if (q.type === 'matching') {
+                    let correctPairs = 0;
+                    let totalPairs = Object.keys(q.answers).length;
+                    for (const key in q.answers) {
+                        if (userAnswer && userAnswer[key] && userAnswer[key] === q.answers[key]) {
+                            correctPairs++;
+                        }
+                    }
+                    if (correctPairs === totalPairs) {
+                        topicScores[topic]++;
+                    }
+                }
+            });
+
+            let strengthsHTML = '<h4>Strengths</h4><p>Based on the performance, the student has demonstrated a strong understanding of the following areas:</p><ul>';
+            let weaknessesHTML = '<h4>Weaknesses</h4><p>Additional practice is recommended in the following topics:</p><ul>';
+            let feedback = 'Overall, the student has shown a good understanding of the material. ';
+
+            // Determine strengths and weaknesses
+            let strongTopics = [];
+            let weakTopics = [];
+            for (const topic in topicScores) {
+                const percentage = (topicScores[topic] / topicCounts[topic]) * 100;
+                if (percentage >= 80) {
+                    strongTopics.push(topic);
+                } else if (percentage < 50) {
+                    weakTopics.push(topic);
+                }
+            }
+
+            if (strongTopics.length > 0) {
+                strengthsHTML += `<li>${strongTopics.join('</li><li>')}</li>`;
+                feedback += `The student performed exceptionally well in **${strongTopics.join(', ')}**.`;
+            } else {
+                strengthsHTML += '<li>No specific strengths identified. Continued practice is encouraged.</li>';
+                feedback += 'Continued practice across all topics will help to build a stronger foundation.';
+            }
+
+            if (weakTopics.length > 0) {
+                weaknessesHTML += `<li>${weakTopics.join('</li><li>')}</li>`;
+                feedback += ` It is recommended that the student receive additional support in **${weakTopics.join(', ')}**.`;
+            } else {
+                weaknessesHTML += '<li>No specific weaknesses identified.</li>';
+                feedback += 'The student has a good grasp of the material across all topics.';
+            }
+
+            strengthsHTML += '</ul>';
+            weaknessesHTML += '</ul>';
+
+            document.getElementById('strengths-weaknesses').innerHTML = strengthsHTML + weaknessesHTML;
+            document.getElementById('feedback').textContent = feedback;
+            document.getElementById('parent-report').textContent = generateFormalReport(studentName);
+        }
+        
+        /**
+         * Generates the formal, positive parent report.
+         * @param {string} name - The student's name.
+         */
+        function generateFormalReport(name) {
+            return `Dear Guardian of ${name},
+
+This report provides a formal overview of the recent ICT diagnostic assessment completed by ${name}. This assessment is strictly a diagnostic tool designed to evaluate the student's current proficiency and identify areas of strength and areas that may require further development. This is not a graded test and will not affect the student's academic standing.
+
+The results of this assessment will be utilized by our instructional team to create a highly personalized learning plan for ${name}, ensuring that educational support is precisely tailored to their individual needs.
+
+We appreciate ${name}'s diligent effort during this assessment. The requirement to answer each question before moving to the next encourages a focused and careful approach, and ${name} successfully demonstrated this commitment to the task.
+
+The insights gained from this diagnostic will be invaluable in guiding future instruction and fostering continued academic growth. We look forward to partnering with you in ${name}'s educational journey.
+
+Sincerely,
+Mr. Usama Ibnzaid
+Riyadh schools - Hittin`;
+        }
+
+        /**
+         * Downloads the generated report as a text file.
+         */
         function downloadReport() {
-            const reportContent = document.getElementById('parent-report').innerText;
+            const reportContent = `
+ICT Diagnostic Assessment Report
+Student: ${studentName}
+Score: ${score} / ${quizData.length}
+
+Strengths:
+${document.getElementById('strengths-weaknesses').querySelector('h4').nextElementSibling.textContent}
+
+Weaknesses:
+${document.getElementById('strengths-weaknesses').querySelectorAll('h4')[1].nextElementSibling.textContent}
+
+Constructive Feedback:
+${document.getElementById('feedback').textContent}
+
+Formal Report to Parent/Guardian:
+${document.getElementById('parent-report').textContent}
+            `;
             const blob = new Blob([reportContent], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${studentName.replace(/ /g, '_')}_ICT_Assessment_Report.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${studentName}_ICT_Assessment_Report.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        /**
+         * Simple modal for alerts, replacing the native alert() function.
+         */
+        function showModal(message) {
+            const modal = document.createElement('div');
+            modal.classList.add('modal');
+            const modalContent = document.createElement('div');
+            modalContent.classList.add('modal-content');
+            modalContent.innerHTML = `
+                <p>${message}</p>
+                <button onclick="this.parentNode.parentNode.remove()">OK</button>
+            `;
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
         }
     </script>
 </body>
